@@ -2814,6 +2814,10 @@ export default {
             requestFeedbackPromise = Promise.resolve(true);
         }
 
+        console.log("KICKPARTICIPANTSCALL");
+
+        this.kickParticipants();
+
         // All promises are returning Promise.resolve to make Promise.all to
         // be resolved when both Promises are finished. Otherwise Promise.all
         // will reject on first rejected Promise and we can redirect the page
@@ -2828,6 +2832,42 @@ export default {
             APP.API.notifyReadyToClose();
             APP.store.dispatch(maybeRedirectToWelcomePage(values[0]));
         });
+    },
+
+    /**
+     * Kicks the other participants before leaving the room.
+     *
+     * @returns
+     */
+    kickParticipants() {
+        // if user is not a moderator we should return
+        if (!room.isModerator()) {
+            return;
+        }
+
+        // Kick Other Participants before leaving the room
+        // if there is no other moderator
+        const self = this;
+
+        let memberIds = self.listMembersIds();
+        let modPresent = false;
+
+        memberIds.forEach(memberId => {
+            if (self.isParticipantModerator(memberId)) {
+                modPresent = true;
+            }
+        });
+
+        // If modPresent is true, return.
+        if (modPresent) {
+            return;
+        }
+
+        memberIds = self.listMembersIds();
+        memberIds.forEach(memberId => {
+            room.kickParticipant(memberId);
+        });
+
     },
 
     /**
